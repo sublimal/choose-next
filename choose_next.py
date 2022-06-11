@@ -24,6 +24,8 @@ import pipes
 import logging
 from itertools import islice, cycle, count
 
+from walkdir import filtered_walk, file_paths, all_paths
+
 if sys.version_info < (3, 0):
     from itertools import ifilter as filter  # pylint: disable=no-name-in-module,redefined-builtin
 if sys.version_info < (3, 2):
@@ -57,29 +59,18 @@ def read_dir_error(exc):
     raise Error('error listing {}: {}'.format(exc.filename, exc.strerror))
 
 
-def remove_hidden(names):
-    """Remove entries starting with a dot (.) from list of basenames."""
-    names[:] = [name for name in names if not name.startswith('.')]
-
-
 def read_dir(path, recursive=False, exclude=None, include=None, include_directories=False):
-    """Return a list of paths in directory at path (recursively)."""
-    paths = []
-    for root, dirs, files in os.walk(path, onerror=read_dir_error):
-        remove_hidden(dirs)
-        remove_hidden(files)
-        names = files
-        if include_directories:
-            names += dirs
-        for name in names:
-            abspath = os.path.join(root, name)
-            if not exclude or \
-                    ((not fnmatch.fnmatch(abspath, exclude)) or
-                     (include and fnmatch.fnmatch(abspath, include))):
-                paths.append(os.path.relpath(abspath, path))
-        if not recursive:
-            break
-    return paths
+    if exclude is None:
+        exclude = []
+    exclude += ['.*'] # remove hidden
+    walk = filtered_walk(os.walk(path, onerror=read_dir_error),
+                         included_files=include,
+                         excluded_files=exclude, excluded_dirs=['.*'],
+                         depth=(None if recursive else 0))
+
+    walk = all_paths(walk) if include_directories else file_paths(walk)
+    if include_directories: next(walk) # don't include path itself
+    return map(lambda p: os.path.relpath(p, path), walk)
 
 
 def make_relpath(path, start=os.curdir):
@@ -348,10 +339,10 @@ def main_throws(args=None):
                         help='be verbose (can be used multiple times)')
     parser.add_argument('-w', '--no-write', action='store_true',
                         default=False, help="don't record selected files to log file")
-    parser.add_argument('--exclude', metavar='PATTERN',
+    parser.add_argument('--exclude', metavar='PATTERN', action='append',
                         help='exclude files matching PATTERN')
-    parser.add_argument('--include', metavar='PATTERN',
-                        help="don't exclude files matching PATTERN")
+    parser.add_argument('--include', metavar='PATTERN', action='append',
+                        help="include files matching PATTERN")
     args = parser.parse_args(args)
     # Use style='{' after Python 2 support is dropped:
     logging.basicConfig(level=loglevel(args), format='%(message)s')

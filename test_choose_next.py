@@ -393,10 +393,10 @@ class ChooseNextTestCase(unittest.TestCase):
         """Check that the '--include' option works."""
         file_a, file_b = self.put_files('a.mp3', 'b.mp3')
         self.assertEqual(file_a + '\n', choose_next_main(self.tmpdir, '--include', '*.mp3'))
-        self.assertEqual(file_b + '\n', choose_next_main(self.tmpdir, '--include', '*.wav'))
-        self.assertEqual(file_b + '\n', choose_next_main(self.tmpdir,
-                                                         '--exclude', '*.mp3',
-                                                         '--include', '*/b.*'))
+        with self.assertRaisesRegex(choose_next.Error, 'no files available'):
+            choose_next_main(self.tmpdir, '--include', '*.wav')
+        with self.assertRaisesRegex(choose_next.Error, 'no files available'):
+            choose_next_main(self.tmpdir, '--exclude', '*.mp3', '--include', '*/b.*')
 
     def test_files(self):
         """Check that filename arguments work."""
