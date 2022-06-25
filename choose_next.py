@@ -38,6 +38,7 @@ try:
 except ImportError:  # Python 2 compatibility
     from urllib import quote_plus  # pylint: disable=no-name-in-module
 
+CACHE = None
 MAKEDIRS = os.makedirs
 if sys.version_info < (3, 4):
     def makedirs_compat(name, exist_ok=False, **kwargs):
@@ -175,7 +176,7 @@ def prompt_next_file(next_file, logfile_content_list, args):
     retval = 0
     while True:
         print(next_file)
-        print("Play [Y]es, [D]elete, [N]ext, [O]pen, mark [W]atched, [Q]uit: ")
+        print("Play [Y]es, [D]elete, [N]ext, [O]pen, mark [W]atched, [R]escan, [Q]uit: ")
 
         c = readchar.readchar()
         if c.lower() == 'n':
@@ -189,6 +190,10 @@ def prompt_next_file(next_file, logfile_content_list, args):
         elif c == 'W':
             args.command = 'watched'
             retval = play_next_file(next_file, logfile_content_list, args)
+            return retval # nextfile
+        elif c.lower() == 'r':
+            global CACHE
+            CACHE = None
             return retval # nextfile
         elif c.lower() == 'd':
             print('Confirm [y/N]: ')
@@ -212,10 +217,15 @@ def choose_next_file(args, next_file=None):
     played_list = logfile_content_list if not args.no_read else []
     played = set(played_list)
     #
-    available = set(read_dir(args.dir, recursive=args.recursive, exclude=args.exclude,
-                             exclude_dirs=args.exclude_dirs, include=args.include,
-                             include_directories=args.include_directories))
-    available_list = sorted(available, key=numkey_path)
+    global CACHE
+    if args.cache and CACHE:
+        available, available_list = CACHE
+    else:
+        available = set(read_dir(args.dir, recursive=args.recursive, exclude=args.exclude,
+                                 exclude_dirs=args.exclude_dirs, include=args.include,
+                                 include_directories=args.include_directories))
+        available_list = sorted(available, key=numkey_path)
+        CACHE = available, available_list
     #
     remaining = available - played
     if not remaining:
@@ -259,7 +269,7 @@ def choose_next_file(args, next_file=None):
 
 def choose_next(args):
     """Main functionality."""
-    play_next = prompt_next_file  if args.interactive else play_next_file
+    play_next = prompt_next_file if args.interactive else play_next_file
     for i in range(args.number) if args.number >= 0 else count():
         next_file = args.files[i] if i < len(args.files) else None
         next_file, logfile_content_list = choose_next_file(args, next_file)
@@ -360,6 +370,8 @@ def main_throws(args=None):
                        default=False, help='dump log file to stdout and exit, '
                                            'null character separated')
     #
+    parser.add_argument('--cache', action='store_true',
+                        default=False, help="cache filesystem scan between actions")
     parser.add_argument('-i', '--no-read', action='store_true',
                         default=False, help="don't use log file to filter selection")
     parser.add_argument('-L', '--logfile', metavar='FILE',
