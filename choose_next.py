@@ -24,6 +24,7 @@ import pipes
 import logging
 from itertools import islice, cycle, count
 
+import readchar
 from walkdir import filtered_walk, file_paths, all_paths
 
 if sys.version_info < (3, 0):
@@ -168,7 +169,6 @@ def play_next_file(next_file, logfile_content_list, args):
     return retval
 
 
-import readchar
 def prompt_next_file(next_file, logfile_content_list, args):
     ''' interactive '''
     # TODO: cleanup logic
