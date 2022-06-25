@@ -299,7 +299,7 @@ def clear_logfile(logfile):
 
 def logfile_path(dirpath):
     """Generate default logfile path, migrating old formats and creating needed directories."""
-    logdir_default = '~' + os.path.sep + '.choose_next'
+    logdir_default = '~' + os.path.sep + '.cache' + os.path.sep + 'choose_next'
     logdir = os.getenv('CHOOSE_NEXT_LOGDIR', logdir_default)
     logdir = os.path.expanduser(logdir)
     try:
@@ -363,7 +363,7 @@ def main_throws(args=None):
     parser.add_argument('-i', '--no-read', action='store_true',
                         default=False, help="don't use log file to filter selection")
     parser.add_argument('-L', '--logfile', metavar='FILE',
-                        help='path of log file (default: ~/.choose_next/<dirname>)')
+                        help='path of log file (default: ~/.cache/choose_next/<dirname>)')
     parser.add_argument('-l', '--last', action='store_true',
                         default=False, help='play last played file')
     parser.add_argument('-N', '--no-recursive', dest='recursive', action='store_false',
