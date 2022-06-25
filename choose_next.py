@@ -165,6 +165,43 @@ def play_next_file(next_file, logfile_content_list, args):
     return retval
 
 
+import readchar
+def prompt_next_file(next_file, logfile_content_list, args):
+    ''' interactive '''
+    # TODO: cleanup logic
+    retval = 0
+    while True:
+        print(next_file)
+        print("Play [Y]es, [D]elete, [N]ext, [O]pen, mark [W]atched, [Q]uit: ")
+
+        c = readchar.readchar()
+        if c.lower() == 'n':
+            return retval # nextfile
+        elif c.lower() == 'y':
+            args.command = 'open'
+            retval = play_next_file(next_file, logfile_content_list, args)
+        elif c.lower() == 'o':
+            args.command = 'marta'
+            retval = play_next_file(next_file, logfile_content_list, args)
+        elif c == 'W':
+            args.command = 'watched'
+            retval = play_next_file(next_file, logfile_content_list, args)
+            return retval # nextfile
+        elif c.lower() == 'd':
+            print('Confirm [y/N]: ')
+            c = readchar.readchar()
+            if c.lower() == 'y':
+                args.command = 'rm'
+                retval = play_next_file(next_file, logfile_content_list, args)
+                args.command = None
+                return retval # nextfile
+        elif c.lower() == 'q':
+            raise Error('quit')
+
+        if retval != 0:
+            return retval
+
+
 def choose_next_file(args, next_file=None):
     """Part of main functionality."""
     logfile_content_list = read_logfile(args.logfile, args.dir)
@@ -219,10 +256,11 @@ def choose_next_file(args, next_file=None):
 
 def choose_next(args):
     """Main functionality."""
+    play_next = prompt_next_file  if args.interactive else play_next_file
     for i in range(args.number) if args.number >= 0 else count():
         next_file = args.files[i] if i < len(args.files) else None
         next_file, logfile_content_list = choose_next_file(args, next_file)
-        retval = play_next_file(next_file, logfile_content_list, args)
+        retval = play_next(next_file, logfile_content_list, args)
         if retval != 0:
             raise Error('command failed')
 
@@ -298,9 +336,13 @@ def main_throws(args=None):
     parser.add_argument('files', metavar='FILES', nargs='*',
                         help='prefer these files before all others')
     parser.add_argument('--version', action='version', version='%(prog)s 3.0.0')
-    parser.add_argument('-c', '--command', metavar='CMD',
+    #
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-c', '--command', metavar='CMD',
                         help='execute CMD on every selected file; %%s in CMD is substituted '
                              'with the filename, otherwise it is appended to CMD')
+    group.add_argument('-I', '--interactive', action='store_true', default=False,
+                       help='prompt for what CMD to execute on selected file')
     #
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--clear', action='store_true',
