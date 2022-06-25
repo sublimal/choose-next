@@ -59,13 +59,16 @@ def read_dir_error(exc):
     raise Error('error listing {}: {}'.format(exc.filename, exc.strerror))
 
 
-def read_dir(path, recursive=False, exclude=None, include=None, include_directories=False):
+def read_dir(path, recursive=False, exclude=None, exclude_dirs=None, include=None, include_directories=False):
     if exclude is None:
         exclude = []
     exclude += ['.*'] # remove hidden
+    exclude_dirs = [] if exclude_dirs is None else exclude_dirs
+    exclude_dirs += ['.*']
+
     walk = filtered_walk(os.walk(path, onerror=read_dir_error),
                          included_files=include,
-                         excluded_files=exclude, excluded_dirs=['.*'],
+                         excluded_files=exclude, excluded_dirs=exclude_dirs,
                          depth=(None if recursive else 0))
 
     walk = all_paths(walk) if include_directories else file_paths(walk)
@@ -210,7 +213,7 @@ def choose_next_file(args, next_file=None):
     played = set(played_list)
     #
     available = set(read_dir(args.dir, recursive=args.recursive, exclude=args.exclude,
-                             include=args.include,
+                             exclude_dirs=args.exclude_dirs, include=args.include,
                              include_directories=args.include_directories))
     available_list = sorted(available, key=numkey_path)
     #
@@ -383,6 +386,8 @@ def main_throws(args=None):
                         default=False, help="don't record selected files to log file")
     parser.add_argument('--exclude', metavar='PATTERN', action='append',
                         help='exclude files matching PATTERN')
+    parser.add_argument('--exclude-dirs', metavar='PATTERN', action='append',
+                        help='exclude directories matching PATTERN')
     parser.add_argument('--include', metavar='PATTERN', action='append',
                         help="include files matching PATTERN")
     args = parser.parse_args(args)
