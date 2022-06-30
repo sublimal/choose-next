@@ -195,8 +195,7 @@ def prompt_next_file(next_file, logfile_content_list, args):
             retval = play_next_file(next_file, logfile_content_list, args)
             return retval # nextfile
         elif c.lower() == 'r':
-            global CACHE
-            CACHE = None
+            purge_cache()
             print('Rescanning...')
             return retval # nextfile
         elif c.lower() == 'd':
@@ -214,6 +213,26 @@ def prompt_next_file(next_file, logfile_content_list, args):
             return retval
 
 
+def purge_cache():
+    logging.info('purging cache')
+    global CACHE
+    CACHE = None
+
+
+def get_available(args):
+    global CACHE
+    if CACHE:
+        available, available_list = CACHE
+    else:
+        available = set(read_dir(args.dir, recursive=args.recursive, exclude=args.exclude,
+                                 exclude_dirs=args.exclude_dirs, include=args.include,
+                                 include_directories=args.include_directories))
+        available_list = sorted(available, key=numkey_path)
+        if args.cache:
+            CACHE = available, available_list
+    return available, available_list
+
+
 def choose_next_file(args, next_file=None):
     """Part of main functionality."""
     logfile_content_list = read_logfile(args.logfile, args.dir)
@@ -221,18 +240,13 @@ def choose_next_file(args, next_file=None):
     played_list = logfile_content_list if not args.no_read else []
     played = set(played_list)
     #
-    global CACHE
-    if args.cache and CACHE:
-        available, available_list = CACHE
-    else:
-        available = set(read_dir(args.dir, recursive=args.recursive, exclude=args.exclude,
-                                 exclude_dirs=args.exclude_dirs, include=args.include,
-                                 include_directories=args.include_directories))
-        available_list = sorted(available, key=numkey_path)
-        CACHE = available, available_list
+    available, available_list = get_available(args)
     #
     remaining = available - played
     if not remaining:
+        if args.cache:
+            purge_cache()
+            available, available_list = get_available(args)
         logging.info('truncating logfile (was full)')
         logfile_content_list = []
         remaining = available
