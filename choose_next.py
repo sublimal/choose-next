@@ -175,6 +175,7 @@ def prompt_next_file(next_file, logfile_content_list, args):
     # TODO: cleanup logic
     retval = 0
     while True:
+        print()
         print(next_file)
         print("Play [Y]es, [D]elete, [N]ext, [O]pen, mark [W]atched, [R]escan, [Q]uit: ")
 
@@ -187,6 +188,8 @@ def prompt_next_file(next_file, logfile_content_list, args):
         elif c.lower() == 'o':
             args.command = 'marta'
             retval = play_next_file(next_file, logfile_content_list, args)
+        elif c == 'w':
+            print('Confirm with Shift+W')
         elif c == 'W':
             args.command = 'watched'
             retval = play_next_file(next_file, logfile_content_list, args)
@@ -194,6 +197,7 @@ def prompt_next_file(next_file, logfile_content_list, args):
         elif c.lower() == 'r':
             global CACHE
             CACHE = None
+            print('Rescanning...')
             return retval # nextfile
         elif c.lower() == 'd':
             print('Confirm [y/N]: ')
