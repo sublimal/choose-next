@@ -177,7 +177,7 @@ def prompt_next_file(next_file, logfile_content_list, args):
     while True:
         print()
         print(next_file)
-        print("Play [Y]es, [D]elete, [N]ext, [O]pen, mark [W]atched, [R]escan, [Q]uit: ")
+        print("Play [Y]es, [D]elete, [N]ext, [O]pen, mark [W]atched, [M]ediainfo, [R]escan, [Q]uit: ")
 
         c = readchar.readchar()
         if c.lower() == 'n':
@@ -194,6 +194,9 @@ def prompt_next_file(next_file, logfile_content_list, args):
             args.command = 'watched'
             retval = play_next_file(next_file, logfile_content_list, args)
             return retval # nextfile
+        elif c == 'm':
+            args.command = 'open -a Mediainfo'
+            retval = play_next_file(next_file, logfile_content_list, args)
         elif c.lower() == 'r':
             purge_cache()
             print('Rescanning...')
