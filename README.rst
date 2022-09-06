@@ -1,6 +1,11 @@
 choose-next
 ===========
 
+.. warning::
+        This particular branch implements a very specific interactive workflow.
+        The implementation is hacks upon hacks, and often machine specific.
+        You are advised not to use this branch.
+
 Chooses a file from a directory. Very handy to re-watch tv series!
 
 Motivation
