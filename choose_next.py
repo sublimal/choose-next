@@ -177,12 +177,12 @@ def prompt_next_file(next_file, logfile_content_list, args):
     while True:
         print()
         print(next_file)
-        print("Play [Y]es, [D]elete, [N]ext, [O]pen, mark [W]atched, [M]ediainfo, [R]escan, [Q]uit: ")
+        print("[V]iew, [D]elete, [N]ext, [O]pen, mark [W]atched, [M]ediainfo, [R]escan, [Q]uit: ")
 
         c = readchar.readchar()
-        if c.lower() == 'n':
+        if c.lower() == 'n' or c.lower() == ' ':
             return retval # nextfile
-        elif c.lower() == 'y':
+        elif c.lower() == 'v' or c.lower() == 'y':
             args.command = 'open'
             retval = play_next_file(next_file, logfile_content_list, args)
         elif c.lower() == 'o':
@@ -202,9 +202,9 @@ def prompt_next_file(next_file, logfile_content_list, args):
             print('Rescanning...')
             return retval # nextfile
         elif c.lower() == 'd':
-            print('Confirm [y/N]: ')
+            print('Confirm [E]rase: ')
             c = readchar.readchar()
-            if c.lower() == 'y':
+            if c == 'E':
                 args.command = 'rm'
                 retval = play_next_file(next_file, logfile_content_list, args)
                 args.command = None
