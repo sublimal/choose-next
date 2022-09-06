@@ -26,6 +26,7 @@ from itertools import islice, cycle, count
 
 import readchar
 from walkdir import filtered_walk, file_paths, all_paths
+from pymediainfo import MediaInfo
 
 if sys.version_info < (3, 0):
     from itertools import ifilter as filter  # pylint: disable=no-name-in-module,redefined-builtin
@@ -292,8 +293,22 @@ def choose_next(args):
     """Main functionality."""
     play_next = prompt_next_file if args.interactive else play_next_file
     for i in range(args.number) if args.number >= 0 else count():
-        next_file = args.files[i] if i < len(args.files) else None
-        next_file, logfile_content_list = choose_next_file(args, next_file)
+        while True:
+            next_file = args.files[i] if i < len(args.files) else None
+            next_file, logfile_content_list = choose_next_file(args, next_file)
+            if args.duration:
+                try:
+                    file_duration = float(MediaInfo.parse(os.path.join(args.dir, next_file)).video_tracks[0].duration)
+                    if args.duration > 0 and file_duration < args.duration:
+                        print(f'Too short {next_file}: {file_duration}')
+                        continue
+                    elif args.duration < 0 and file_duration > abs(args.duration):
+                        print(f'Too long {next_file}: {file_duration}')
+                        continue
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+            break
         retval = play_next(next_file, logfile_content_list, args)
         if retval != 0:
             raise Error('command failed')
@@ -391,6 +406,8 @@ def main_throws(args=None):
                        default=False, help='dump log file to stdout and exit, '
                                            'null character separated')
     #
+    parser.add_argument('--duration', type=float, metavar='ms',
+                        help='minimum duration (ms), if negative: maximum duration')
     parser.add_argument('--cache', action='store_true',
                         default=False, help="cache filesystem scan between actions")
     parser.add_argument('-i', '--no-read', action='store_true',
